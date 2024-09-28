@@ -26,6 +26,13 @@ $segments = explode("/", $request);
 //Authenticate user
 if (!isset($_SESSION["user_id"]) && !($segments[0] === "login" && empty($segments[1]))) {
     header("Location: " . $basePath . "/login");
+    exit();
+}
+
+//Redirect / to /panel
+if (empty($segments[0])) {
+    header("Location: " . $basePath . "/panel");
+    exit();
 }
 
 //Login page
@@ -132,5 +139,6 @@ if ($segments[0] === "login") {
 
     </html>
 <?php
+    exit();
 }
 ?>
