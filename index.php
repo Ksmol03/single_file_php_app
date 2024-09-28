@@ -24,13 +24,12 @@ $request = substr($request, strlen($basePath));
 $segments = explode("/", $request);
 
 //Authenticate user
-if (!isset($_SESSION["user_id"]) && $segments[0] != "login") {
+if (!isset($_SESSION["user_id"]) && !($segments[0] === "login" && empty($segments[1]))) {
     header("Location: " . $basePath . "/login");
 }
 
 //Login page
 if ($segments[0] === "login") {
-    echo "mamale";
 
     //Handle log in form
     $error = "";
