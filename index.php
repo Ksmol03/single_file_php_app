@@ -35,26 +35,6 @@ if (empty($segments[0])) {
     exit();
 }
 
-//Check permissions function
-function has_permission($permissionName)
-{
-    $conn = $GLOBALS["conn"];
-    $userID = $_SESSION["user_id"];
-
-    // Get the user's role ID
-    $sql = "SELECT p.permission_name FROM users u JOIN roles r USING(role_id) JOIN permissions_to_roles ptr USING(role_id) JOIN permissions p USING(permission_id) WHERE u.user_id = ? AND p.permission_name = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("is", $userID, $permissionName);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
 //Login page
 if ($segments[0] === "login") {
 
@@ -347,4 +327,25 @@ if ($segments[0] === "login") {
     </html>
 <?php
 }
+
+//Check permissions function
+function has_permission($permissionName)
+{
+    $conn = $GLOBALS["conn"];
+    $userID = $_SESSION["user_id"];
+
+    // Get the user's role ID
+    $sql = "SELECT p.permission_name FROM users u JOIN roles r USING(role_id) JOIN permissions_to_roles ptr USING(role_id) JOIN permissions p USING(permission_id) WHERE u.user_id = ? AND p.permission_name = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("is", $userID, $permissionName);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 ?>
