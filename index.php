@@ -176,10 +176,10 @@ if ($segments[0] === "login") {
 } elseif ($segments[0] === "panel" && $segments[1] === "edit-item" && isset($segments[2]) && is_numeric($segments[2]) && empty($segments[3])) {
 
     //Get item data
-    $itemID = $segments[2];
+    $item["item_id"] = $segments[2];
     $sql = "SELECT * FROM items WHERE item_id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $itemID);
+    $stmt->bind_param("i", $item["item_id"]);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -193,7 +193,9 @@ if ($segments[0] === "login") {
     //Get departments names
     $sql = "SELECT * FROM departments";
     $stmt = $conn->query($sql);
-    $departments = $stmt;
+    while ($department = $stmt->fetch_assoc()) {
+        $departments[] = $department;
+    }
 
     //Handle save item form
     $error = "";
@@ -202,10 +204,47 @@ if ($segments[0] === "login") {
         $item["serial_number"] = $_POST["serial_number"];
         $item["department_id"] = $_POST["department_id"];
 
+        //Check if all data is provided
         if (!empty($item["item_name"])) {
             if (!empty($item["serial_number"])) {
                 if (!empty($item["department_id"])) {
-                    $error = "Success";
+
+                    //Check if item name is valid
+                    $exp = "/^[a-z\s]*$/i";
+                    if (preg_match($exp, $item["item_name"])) {
+
+
+                        //Check if serial number is valid
+                        $exp = "/^[a-z\d-]+$/i";
+                        if (preg_match($exp, $item["serial_number"])) {
+
+                            //Check if department id exists
+                            $exists = false;
+                            foreach ($departments as $department) {
+                                if ($department["department_id"] == $item["department_id"]) {
+                                    $exists = true;
+                                    break;
+                                }
+                            }
+                            if ($exists) {
+
+                                //Update item
+                                $sql = "UPDATE items SET item_name = ?, serial_number = ?, department_id = ? WHERE item_id = ?";
+                                $stmt = $conn->prepare($sql);
+                                $stmt->bind_param("ssii", $item["item_name"], $item["serial_number"], $item["department_id"], $item["item_id"]);
+                                $stmt->execute();
+
+                                header("Location: " . $basePath . "/panel");
+                                exit();
+                            } else {
+                                $error = "Invalid department ID";
+                            }
+                        } else {
+                            $error = "Invalid serial number";
+                        }
+                    } else {
+                        $error = "Invalid item name";
+                    }
                 } else {
                     $error = "Department ID is required";
                 }
@@ -215,6 +254,17 @@ if ($segments[0] === "login") {
         } else {
             $error = "Item name is required";
         }
+    }
+
+    //Handle delete item form
+    $error = "";
+    if (isset($_POST["delete-item-form"])) {
+        $sql = "DELETE FROM items WHERE item_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $item["item_id"]);
+        $stmt->execute();
+
+        header("Location: " . $basePath . "/panel");
     }
 
 ?>
@@ -229,13 +279,14 @@ if ($segments[0] === "login") {
     </head>
 
     <body>
+        <a href=<?= $basePath . "/panel" ?>>Back to panel</a>
         <p>Edit item <?= $item["item_id"] ?></p>
         <form action="" method="POST">
             <input type="text" name="item_name" value="<?= $item["item_name"] ?>">
             <input type="text" name="serial_number" value="<?= $item["serial_number"] ?>">
             <select name="department_id">
                 <?php
-                while ($department = $departments->fetch_assoc()) {
+                foreach ($departments as $department) {
                 ?>
                     <option
                         value="<?= $department["department_id"] ?>"
@@ -247,6 +298,9 @@ if ($segments[0] === "login") {
                 ?>
             </select>
             <input type="submit" name="save-item-form" value="save">
+        </form>
+        <form action="" method="POST">
+            <input type="submit" name="delete-item-form" value="delete">
         </form>
         <p class="text-red-500"><?= $error ?></p>
     </body>
