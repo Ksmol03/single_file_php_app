@@ -257,7 +257,6 @@ if ($segments[0] === "login") {
     }
 
     //Handle delete item form
-    $error = "";
     if (isset($_POST["delete-item-form"])) {
         $sql = "DELETE FROM items WHERE item_id = ?";
         $stmt = $conn->prepare($sql);
