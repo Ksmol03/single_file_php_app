@@ -159,7 +159,13 @@ if ($segments[0] === "login") {
                         <td><?= $item["item_name"] ?></td>
                         <td><?= $item["serial_number"] ?></td>
                         <td><?= $item["department_name"] ?></td>
-                        <td><a href="<?= $basePath ?>/panel/edit-item/<?= $item["item_id"] ?>">Edit</a></td>
+                        <?php
+                        if (has_permission("update_items")) {
+                        ?>
+                            <td><a href="<?= $basePath ?>/panel/edit-item/<?= $item["item_id"] ?>">Edit</a></td>
+                        <?php
+                        }
+                        ?>
                     </tr>
                 <?php
                 }
@@ -174,6 +180,12 @@ if ($segments[0] === "login") {
 
     //Edit item page
 } elseif ($segments[0] === "panel" && $segments[1] === "edit-item" && isset($segments[2]) && is_numeric($segments[2]) && empty($segments[3])) {
+
+    //Check if user can edit
+    if (!has_permission("update_items")) {
+        header("Location: " . $basePath . "/panel");
+        exit();
+    }
 
     //Get item data
     $item["item_id"] = $segments[2];
@@ -258,12 +270,14 @@ if ($segments[0] === "login") {
 
     //Handle delete item form
     if (isset($_POST["delete-item-form"])) {
-        $sql = "DELETE FROM items WHERE item_id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $item["item_id"]);
-        $stmt->execute();
+        if (has_permission("delete-items")) {
+            $sql = "DELETE FROM items WHERE item_id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $item["item_id"]);
+            $stmt->execute();
 
-        header("Location: " . $basePath . "/panel");
+            header("Location: " . $basePath . "/panel");
+        }
     }
 
 ?>
@@ -299,7 +313,13 @@ if ($segments[0] === "login") {
             <input type="submit" name="save-item-form" value="save">
         </form>
         <form action="" method="POST">
-            <input type="submit" name="delete-item-form" value="delete">
+            <?php
+            if (has_permission("delete_items")) {
+            ?>
+                <input type="submit" name="delete-item-form" value="delete">
+            <?php
+            }
+            ?>
         </form>
         <p class="text-red-500"><?= $error ?></p>
     </body>
